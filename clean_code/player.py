@@ -1,10 +1,10 @@
-from mutagen.easyid3 import EasyID3
 import pygame
 
 import tkinter as tk
 from tkinter import filedialog
 
 from playlist import Playlist
+from song import Song
 
 SONG_END = pygame.USEREVENT + 1
 
@@ -37,33 +37,25 @@ class PlayerApp(tk.Frame):
 
     def add_songs(self):
         try:
-            directory = filedialog.askopenfilenames()
-            for song_dir in directory:
-                print(song_dir)
-                self.playlist.add(song_dir)
+            paths = filedialog.askopenfilenames()
+            for path in paths:
+                print(path)
+                self.playlist.add(Song.from_file(path))
             self.playlist_box.delete(0.0, tk.END)
 
-            for key, item in enumerate(self.playlist.paths):
-                song = EasyID3(item)
-                song_data = (str(key + 1) + ' : ' + song['title'][0] + ' - '
-                            + song['artist'][0])
-                self.playlist_box.insert(tk.END, song_data + '\n')
+            for number, song in enumerate(self.playlist.songs, start=1):
+                self.playlist_box.insert(tk.END, f"{number} : {song.title} - {song.artist}\n")
         except:
             pass
 
     def current_song_description(self):
-        try:
-            song = EasyID3(self.playlist.current())
-            song_data = "Now playing: Nr:" + str(self.playlist.index + 1) + " " + \
-                        str(song['title']) + " - " + str(song['artist'])
-            return song_data
-        except:
-            pass
+        song = self.playlist.current()
+        return f"Now playing: Nr:{self.playlist.index + 1} {song.title} - {song.artist}"
 
     def play_current(self):
         try:
-            path = self.playlist.current()
-            pygame.mixer.music.load(path)
+            path = self.playlist.current().path
+            pygame.mixer.music.load(str(path))
             pygame.mixer.music.play(1, 0.0)
             pygame.mixer.music.set_endevent(SONG_END)
             self.paused = False
