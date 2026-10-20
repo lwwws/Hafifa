@@ -4,6 +4,8 @@ import pygame
 import tkinter as tk
 from tkinter import filedialog
 
+from playlist import Playlist
+
 SONG_END = pygame.USEREVENT + 1
 
 
@@ -13,9 +15,8 @@ class PlayerApp(tk.Frame):
         super(PlayerApp, self).__init__(master)
 
         self.grid()
-        self.playlist = []
+        self.playlist = Playlist()
         self.paused = False
-        self.current_index = 0
 
         b1 = tk.Button(self, text="ADD TO LIST",command=self.add_songs,bg='AntiqueWhite1',width=40)
         b1.grid(row=1,column=0)
@@ -39,10 +40,10 @@ class PlayerApp(tk.Frame):
             directory = filedialog.askopenfilenames()
             for song_dir in directory:
                 print(song_dir)
-                self.playlist.append(song_dir)
+                self.playlist.add(song_dir)
             self.playlist_box.delete(0.0, tk.END)
 
-            for key, item in enumerate(self.playlist):
+            for key, item in enumerate(self.playlist.paths):
                 song = EasyID3(item)
                 song_data = (str(key + 1) + ' : ' + song['title'][0] + ' - '
                             + song['artist'][0])
@@ -52,8 +53,8 @@ class PlayerApp(tk.Frame):
 
     def current_song_description(self):
         try:
-            song = EasyID3(self.playlist[self.current_index])
-            song_data = "Now playing: Nr:" + str(self.current_index + 1) + " " + \
+            song = EasyID3(self.playlist.current())
+            song_data = "Now playing: Nr:" + str(self.playlist.index + 1) + " " + \
                         str(song['title']) + " - " + str(song['artist'])
             return song_data
         except:
@@ -61,8 +62,8 @@ class PlayerApp(tk.Frame):
 
     def play_current(self):
         try:
-            directory = self.playlist[self.current_index]
-            pygame.mixer.music.load(directory)
+            path = self.playlist.current()
+            pygame.mixer.music.load(path)
             pygame.mixer.music.play(1, 0.0)
             pygame.mixer.music.set_endevent(SONG_END)
             self.paused = False
@@ -89,37 +90,17 @@ class PlayerApp(tk.Frame):
         except:
             pass
 
-    def next_index(self):
-        try:
-            if self.current_index + 2 <= len(self.playlist):
-                return self.current_index + 1
-            else:
-                return 0
-        except:
-            pass
-
     def next_song(self):
-        try:
-            self.current_index = self.next_index()
-            self.play_current()
-        except:
-            pass
-
-    def previous_index(self):
-        try:
-            if self.current_index - 1 >= 0:
-                return self.current_index - 1
-            else:
-                return len(self.playlist) - 1
-        except:
-            pass
+        if self.playlist.is_empty():
+            return
+        self.playlist.next()
+        self.play_current()
 
     def previous_song(self):
-        try:
-            self.current_index = self.previous_index()
-            self.play_current()
-        except:
-            pass
+        if self.playlist.is_empty():
+            return
+        self.playlist.previous()
+        self.play_current()
 
 
 def main():
