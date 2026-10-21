@@ -1,17 +1,38 @@
-import pygame
-
 import tkinter as tk
+from pathlib import Path
 from tkinter import filedialog
+
+import pygame
+from mutagen import MutagenError
 
 from playlist import Playlist
 from song import Song
 
-from mutagen import MutagenError
-from pathlib import Path
+class Player:
+    """Plays one song at a time through pygame and reports when it ends."""
 
-SONG_END = pygame.USEREVENT + 1
+    SONG_END = pygame.USEREVENT + 1
 
+    def __init__(self):
+        pygame.mixer.music.set_endevent(self.SONG_END)
+        self.paused = False
 
+    def play(self, path: Path) -> None:
+        """Start playing a file. Raises pygame.error if the file can't be played."""
+        pygame.mixer.music.load(str(path))
+        pygame.mixer.music.play(1, 0.0)
+        self.paused = False
+
+    def toggle_pause(self) -> None:
+        if self.paused:
+            pygame.mixer.music.unpause()
+        else:
+            pygame.mixer.music.pause()
+        self.paused = not self.paused
+
+    def song_finished(self) -> bool:
+        """True if the current song ended since the last check."""
+        return any(event.type == self.SONG_END for event in pygame.event.get())
 
 class PlayerApp(tk.Frame):
     def __init__(self, master):
@@ -19,7 +40,7 @@ class PlayerApp(tk.Frame):
 
         self.grid()
         self.playlist = Playlist()
-        self.paused = False
+        self.player = Player()
 
         b1 = tk.Button(self, text="ADD TO LIST",command=self.add_songs,bg='AntiqueWhite1',width=40)
         b1.grid(row=1,column=0)
@@ -64,26 +85,18 @@ class PlayerApp(tk.Frame):
             return
         song = self.playlist.current()
         try:
-            pygame.mixer.music.load(str(song.path))
+            self.player.play(song.path)
         except pygame.error:
             self.status_label["text"] = f"Can't play: {song.path.name}"
             return
-        pygame.mixer.music.play(1, 0.0)
-        pygame.mixer.music.set_endevent(SONG_END)
-        self.paused = False
         self.status_label["text"] = self.current_song_description()
 
     def check_music(self):
-        for event in pygame.event.get():
-            if event.type == SONG_END:
-                self.next_song()
-    
+        if self.player.song_finished():
+            self.next_song()
+
     def toggle_pause(self):
-        if self.paused:
-            pygame.mixer.music.unpause()
-        else:
-            pygame.mixer.music.pause()
-        self.paused = not self.paused
+        self.player.toggle_pause()
 
     def next_song(self):
         if self.playlist.is_empty():
