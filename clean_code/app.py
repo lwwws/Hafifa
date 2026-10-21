@@ -1,6 +1,7 @@
 """Tkinter user interface for the MP3 player, and the program's entry point."""
 
 import tkinter as tk
+from dataclasses import dataclass
 from pathlib import Path
 from tkinter import filedialog
 
@@ -11,6 +12,20 @@ from playlist import Playlist
 from song import Song
 from player import Player
 
+@dataclass(frozen=True)
+class Settings:
+    """Look and layout of the window."""
+
+    window_title: str = "MP3 Music Player"
+    window_size: str = "500x500"
+    button_bg: str = "AntiqueWhite1"
+    button_width: int = 40
+    label_fg: str = "Black"
+    label_bg: str = "ivory2"
+    label_font: tuple[str, int] = ("Helvetica 12 bold italic", 10)
+    playlist_width: int = 60
+
+
 class PlayerApp(tk.Frame):
     """Main window: control buttons, a now-playing label and the playlist view.
 
@@ -18,30 +33,33 @@ class PlayerApp(tk.Frame):
     song to play and tell the Player to play it.
     """
 
-    def __init__(self, master):
+    def __init__(self, master, settings: Settings):
         """Build the widgets inside `master`, the root Tk window."""
-        super(PlayerApp, self).__init__(master)
+        super().__init__(master)
+        self.settings = settings
 
         self.grid()
         self.playlist = Playlist()
         self.player = Player()
 
-        b1 = tk.Button(self, text="ADD TO LIST",command=self.add_songs,bg='AntiqueWhite1',width=40)
-        b1.grid(row=1,column=0)
-        b2 = tk.Button(self, text="PLAY SONG",command=self.play_current,bg='AntiqueWhite1',width=40)
-        b2.grid(row=2,column=0)
-        b3 = tk.Button(self, text="PAUSE/UNPAUSE",command=self.toggle_pause,bg='AntiqueWhite1',width=40)
-        b3.grid(row=3,column=0)
-        b4 = tk.Button(self, text="PREVIOUS SONG",command=self.previous_song,bg='AntiqueWhite1',width=40)
-        b4.grid(row=4,column=0)
-        b5 = tk.Button(self, text="NEXT SONG",command=self.next_song,bg='AntiqueWhite1',width=40)
-        b5.grid(row=5,column=0)
+        # (label, handler) for each control button, top to bottom, one per row.
+        buttons = [
+            ("ADD TO LIST", self.add_songs),
+            ("PLAY SONG", self.play_current),
+            ("PAUSE/UNPAUSE", self.toggle_pause),
+            ("PREVIOUS SONG", self.previous_song),
+            ("NEXT SONG", self.next_song),
+        ]
+        for row, (text, command) in enumerate(buttons, start=1):
+            tk.Button(self, text=text, command=command,
+                      bg=settings.button_bg, width=settings.button_width).grid(row=row, column=0)
 
-        self.status_label = tk.Label(self, fg='Black',font=('Helvetica 12 bold italic',10),bg='ivory2')
-        self.status_label.grid(row=6,column=0)
+        self.status_label = tk.Label(self, fg=settings.label_fg,
+                             bg=settings.label_bg, font=settings.label_font)
+        self.status_label.grid(row=6, column=0)
 
-        self.playlist_box = tk.Text(self,wrap=tk.WORD,width=60)
-        self.playlist_box.grid(row=8,column=0)
+        self.playlist_box = tk.Text(self, wrap=tk.WORD, width=settings.playlist_width)
+        self.playlist_box.grid(row=8, column=0)
 
     def add_songs(self):
         """Ask the user for music files and add them to the playlist.
@@ -118,10 +136,13 @@ class PlayerApp(tk.Frame):
 def main():
     """Start pygame, build the window and run the tkinter event loop."""
     pygame.init()
+
+    settings = Settings()
     window = tk.Tk()
-    window.geometry("500x500")
-    window.title("MP3 Music Player")
-    app = PlayerApp(window)
+    window.geometry(settings.window_size)
+    window.title(settings.window_title)
+
+    app = PlayerApp(window, settings)
     app.poll_music()      # start the repeating check
     window.mainloop()     # hand control to tkinter
 
