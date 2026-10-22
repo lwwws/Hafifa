@@ -4,24 +4,11 @@ from tkinter import filedialog
 
 import pygame
 from mutagen import MutagenError
-from pydantic_settings import BaseSettings, SettingsConfigDict
 
 from player import Player
 from playlist import Playlist
+from settings import WindowSettings
 from song import Song
-
-
-class WindowSettings(BaseSettings):
-    model_config = SettingsConfigDict(env_prefix="PLAYER_", frozen=True)
-
-    window_title: str = "MP3 Music Player"
-    window_size: str = "500x500"
-    button_bg: str = "AntiqueWhite1"
-    button_width: int = 40
-    label_fg: str = "Black"
-    label_bg: str = "ivory2"
-    label_font: tuple[str, int] = ("Helvetica 12 bold italic", 10)
-    playlist_width: int = 60
 
 
 class PlayerApp(tk.Frame):
@@ -127,20 +114,3 @@ class PlayerApp(tk.Frame):
         self.check_music()
         # after() fires only once, so schedule the next check every time.
         self.after(100, self.poll_music)
-
-
-def main():
-    pygame.init()
-
-    settings = WindowSettings()
-    window = tk.Tk()
-    window.geometry(settings.window_size)
-    window.title(settings.window_title)
-
-    app = PlayerApp(window, settings)
-    app.poll_music()
-    window.mainloop()
-
-
-if __name__ == "__main__":
-    main()

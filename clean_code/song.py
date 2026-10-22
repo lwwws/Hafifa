@@ -7,6 +7,11 @@ from pydantic import BaseModel
 UNKNOWN_ARTIST = "Unknown artist"
 
 
+def _first_tag_value(tags: EasyID3 | dict, key: str, default: str) -> str:
+    # EasyID3 stores each tag as a list of values, so take the first.
+    return tags.get(key, [default])[0]
+
+
 class Song(BaseModel):
     path: Path
     title: str
@@ -21,8 +26,8 @@ class Song(BaseModel):
         except ID3NoHeaderError:
             tags = {}
 
-        # EasyID3 stores each tag as a list of values, so take the first.
-        title = tags.get("title", [file_path.stem])[0]
-        artist = tags.get("artist", [UNKNOWN_ARTIST])[0]
-
-        return cls(path=file_path, title=title, artist=artist)
+        return cls(
+            path=file_path,
+            title=_first_tag_value(tags, "title", file_path.stem),
+            artist=_first_tag_value(tags, "artist", UNKNOWN_ARTIST),
+        )
