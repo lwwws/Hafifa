@@ -1,11 +1,11 @@
 import asyncio
-import base64
-import json
 import logging
 from pathlib import Path
 
 from playwright.async_api import Browser, Error as PlaywrightError
 from pydantic_settings import BaseSettings, SettingsConfigDict
+
+from page_capture import PageCapture
 
 BASE_DIR = Path(__file__).parent
 
@@ -23,31 +23,42 @@ class ScraperSettings(BaseSettings):
 
 
 class Scraper:
+    """Loads pages in a shared browser and saves each one to its own folder:
+
+        url_N/screenshot.png   the page as it looked after loading
+        url_N/browse.json      {"html", "resources", "screenshot" (base64 PNG)}
+    """
+
     def __init__(self, browser: Browser, settings: ScraperSettings):
         self.browser = browser
         self.settings = settings
         self.semaphore = asyncio.Semaphore(settings.max_concurrent_pages)
 
-    async def browse(self, url: str, out_dir: Path) -> bool:
-        """Open the URL and save its HTML, loaded resources and screenshot.
-
-        Returns False instead of raising when the page fails to load, so one bad URL
-        doesn't stop the others.
-        """
+    async def capture(self, url: str) -> PageCapture:
         resources: list[str] = []
 
+        async with await self.browser.new_page() as page:
+            # Subscribe before goto
+            page.on("request", lambda request: resources.append(request.url))
+            await page.goto(url, timeout=self.settings.page_timeout_ms)
+            html = await page.content()
+            screenshot = await page.screenshot()
+
+        return PageCapture(html=html, resources=resources, screenshot=screenshot)
+
+    async def browse(self, url: str, out_dir: Path) -> bool:
+        """Capture the URL and save it to out_dir.
+
+        Returns False instead of raising when the page fails to load
+        """
         try:
-            async with self.semaphore, await self.browser.new_page() as page:
-                page.on("request", lambda request: resources.append(request.url))
-                await page.goto(url, timeout=self.settings.page_timeout_ms)
-                html = await page.content()
-                out_dir.mkdir(parents=True, exist_ok=True)
-                screenshot = await page.screenshot(path=out_dir / "screenshot.png")
+            async with self.semaphore:
+                capture = await self.capture(url)
         except PlaywrightError as error:
             logger.error("Failed %s: %s", url, error.message.splitlines()[0])
             return False
 
-        write_browse_json(out_dir / "browse.json", html, resources, screenshot)
+        capture.save(out_dir)
         logger.info("Saved %s to %s", url, out_dir.name)
 
         return True
@@ -60,12 +71,3 @@ class Scraper:
 
         # Return how many pages were saved successfully.
         return sum(results)
-
-
-def write_browse_json(path: Path, html: str, resources: list[str], screenshot: bytes) -> None:
-    data = {
-        "html": html,
-        "resources": resources,
-        "screenshot": base64.b64encode(screenshot).decode("ascii"),
-    }
-    path.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
