@@ -8,8 +8,12 @@ from stock_miner import mine_stocks
 logger = logging.getLogger(__name__)
 
 
-def main():
+def configure_logging():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s [%(threadName)s] %(message)s")
+
+
+def main():
+    configure_logging()
 
     settings = MinerSettings()
     jobs = build_jobs()
