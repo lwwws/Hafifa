@@ -23,12 +23,12 @@ def main() -> None:
 
     settings = MinerSettings()
     jobs = build_jobs()
-    logger.info("Mining %s", ", ".join(job.stock.name for job in jobs))
+    logger.info(f"Mining {', '.join(job.stock.name for job in jobs)}")
 
     changes = mine_stocks(jobs, settings)
 
     write_changes(changes, settings.destination_file)
-    logger.info("Wrote %d rows to %s", len(changes), settings.destination_file)
+    logger.info(f"Wrote {len(changes)} rows to {settings.destination_file}")
 
 
 if __name__ == "__main__":

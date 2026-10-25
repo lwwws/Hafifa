@@ -23,6 +23,6 @@ def mine_stocks(jobs: list[StockJob], settings: MinerSettings) -> list[PriceChan
             try:
                 changes.extend(future.result())
             except Exception:
-                logger.exception("%s: failed, skipping", future_to_job[future].stock.name)
+                logger.exception(f"{future_to_job[future].stock.name}: failed, skipping")
 
     return changes
