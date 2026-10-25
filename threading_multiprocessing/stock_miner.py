@@ -2,9 +2,10 @@ import logging
 from concurrent.futures import ThreadPoolExecutor, as_completed
 
 from dates_reader import read_dates
-from price_fetcher import PriceChange, fetch_price_changes
+from models.price_change import PriceChange
+from models.stock_job import StockJob
+from price_fetcher import fetch_price_changes
 from settings import MinerSettings
-from stocks import StockJob
 
 logger = logging.getLogger(__name__)
 

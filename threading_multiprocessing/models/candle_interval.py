@@ -3,7 +3,6 @@ from pydantic import BaseModel, ConfigDict
 
 
 class CandleInterval(BaseModel):
-    # DateOffset isn't a type pydantic knows
     model_config = ConfigDict(frozen=True, arbitrary_types_allowed=True)
 
     yahoo_name: str

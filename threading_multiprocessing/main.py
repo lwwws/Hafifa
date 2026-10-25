@@ -1,24 +1,14 @@
 import logging
-from pathlib import Path
 
-import pandas as pd
-
-from price_fetcher import PriceChange
+from changes_writer import write_changes
+from models.stock_job import build_jobs
 from settings import MinerSettings
 from stock_miner import mine_stocks
-from stocks import build_jobs
 
 logger = logging.getLogger(__name__)
 
 
-def write_changes(changes: list[PriceChange], path: Path) -> None:
-    rows = pd.DataFrame([change.model_dump() for change in changes], columns=list(PriceChange.model_fields))
-
-    path.parent.mkdir(parents=True, exist_ok=True)
-    rows.sort_values(["stock", "timestamp"]).to_csv(path, index=False)
-
-
-def main() -> None:
+def main():
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s [%(threadName)s] %(message)s")
 
     settings = MinerSettings()

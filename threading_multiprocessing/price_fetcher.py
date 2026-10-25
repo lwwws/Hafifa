@@ -3,20 +3,12 @@ from datetime import datetime
 
 import pandas as pd
 import yfinance as yf
-from pydantic import BaseModel, ConfigDict
 
-from candle_interval import CandleInterval
-from stocks import Stock
+from models.candle_interval import CandleInterval
+from models.price_change import PriceChange
+from models.stock import Stock
 
 logger = logging.getLogger(__name__)
-
-
-class PriceChange(BaseModel):
-    model_config = ConfigDict(frozen=True)
-
-    timestamp: datetime
-    stock: str
-    change_percent: float
 
 
 def _fetch_candles(ticker: str, start: datetime, end: datetime, interval: CandleInterval) -> pd.DataFrame:
