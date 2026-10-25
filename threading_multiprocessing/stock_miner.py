@@ -12,6 +12,7 @@ logger = logging.getLogger(__name__)
 
 def _run_job(job: StockJob, settings: MinerSettings) -> list[PriceChange]:
     timestamps = read_dates(job.dates_file, settings.default_dates_timezone)
+
     return fetch_price_changes(job.stock, timestamps, settings.candle_interval)
 
 

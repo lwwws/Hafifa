@@ -40,7 +40,7 @@ def fetch_price_changes(stock: Stock, timestamps: list[datetime], interval: Cand
         logger.warning(f"{stock.name}: no candles returned for {stock.ticker}")
         return []
 
-    # Candles which are monthly/daily come with second precision, and we can't compare them with microsecond precision timestamps
+    # Daily/monthly candles come with second precision, we can't compare them with microsecond timestamps
     candles.index = candles.index.as_unit("us")
 
     changes = []
@@ -49,7 +49,7 @@ def fetch_price_changes(stock: Stock, timestamps: list[datetime], interval: Cand
         if candle is not None:
             changes.append(PriceChange(timestamp=timestamp, stock=stock.name, change_percent=_change_percent(candle)))
 
-    skipped = len(timestamps) - len(changes)
-    logger.info(f"{stock.name}: {len(changes)} of {len(timestamps)} timestamps have data, {skipped} skipped (no candle)")
+    found, skipped = len(changes), len(timestamps) - len(changes)
+    logger.info(f"{stock.name}: {found} of {len(timestamps)} timestamps have data, {skipped} skipped (no candle)")
 
     return changes
