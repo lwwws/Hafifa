@@ -37,10 +37,6 @@ def _change_percent(candle: pd.Series) -> float:
 
 
 def fetch_price_changes(stock: Stock, timestamps: list[datetime], interval: CandleInterval) -> list[PriceChange]:
-    """Fetch the stock's candles in one request and compute the % change of the candle containing each timestamp.
-
-    Timestamps with no candle (the market was closed) are skipped.
-    """
     if not timestamps:
         return []
 
@@ -51,6 +47,9 @@ def fetch_price_changes(stock: Stock, timestamps: list[datetime], interval: Cand
     if candles.empty:
         logger.warning("%s: no candles returned for %s", stock.name, stock.ticker)
         return []
+
+    # Candles which are monthly/daily come with second precision, and we can't compare them with microsecond precision timestamps
+    candles.index = candles.index.as_unit("us")
 
     changes = []
     for timestamp in timestamps:
