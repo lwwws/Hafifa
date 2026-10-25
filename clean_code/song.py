@@ -8,7 +8,6 @@ UNKNOWN_ARTIST = "Unknown artist"
 
 
 def _first_tag_value(tags: EasyID3 | dict, key: str, default: str) -> str:
-    # EasyID3 stores each tag as a list of values, so take the first.
     return tags.get(key, [default])[0]
 
 
