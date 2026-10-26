@@ -2,7 +2,8 @@ import asyncio
 import logging
 from pathlib import Path
 
-from playwright.async_api import Browser, Error as PlaywrightError
+from playwright.async_api import Browser
+from playwright.async_api import Error as PlaywrightError
 
 from page_capture import PageCapture
 from settings import ScraperSettings
