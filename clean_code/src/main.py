@@ -2,8 +2,8 @@ import tkinter as tk
 
 import pygame
 
-from app import PlayerApp
-from settings import WindowSettings
+from configs.settings import WindowSettings
+from ui.app import PlayerApp
 
 
 def main():
@@ -15,7 +15,7 @@ def main():
     window.title(settings.window_title)
 
     app = PlayerApp(window, settings)
-    app.poll_music()
+    app.song_end_polling_loop()
     window.mainloop()
 
 

@@ -1,4 +1,4 @@
-from song import Song
+from models.song import Song
 
 
 class Playlist:

@@ -5,10 +5,10 @@ from tkinter import filedialog
 import pygame
 from mutagen import MutagenError
 
-from player import Player
-from playlist import Playlist
-from settings import WindowSettings
-from song import Song
+from audio.player import Player
+from configs.settings import WindowSettings
+from models.playlist import Playlist
+from models.song import Song
 
 
 class PlayerApp(tk.Frame):
@@ -62,7 +62,7 @@ class PlayerApp(tk.Frame):
         self.refresh_playlist_box()
 
         if skipped:
-            self.status_label["text"] = "Couldn't read: " + ", ".join(skipped)
+            self.status_label["text"] = f"Couldn't read: {', '.join(skipped)}"
 
     def refresh_playlist_box(self) -> None:
         self.playlist_box.delete("1.0", tk.END)
@@ -110,7 +110,7 @@ class PlayerApp(tk.Frame):
         self.playlist.previous()
         self.play_current()
 
-    def poll_music(self) -> None:
+    def song_end_polling_loop(self) -> None:
         self.check_music()
         # after() fires only once, so schedule the next check every time.
-        self.after(100, self.poll_music)
+        self.after(100, self.song_end_polling_loop)

@@ -15,7 +15,7 @@ class Player:
 
     def play(self, path: Path) -> None:
         pygame.mixer.music.load(str(path))
-        pygame.mixer.music.play(1, 0.0)
+        pygame.mixer.music.play()
         self.paused = False
 
     def toggle_pause(self) -> None:
