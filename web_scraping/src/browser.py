@@ -4,14 +4,11 @@ from pathlib import Path
 
 from playwright.async_api import async_playwright
 
-from scraper import Scraper
-from settings import ScraperSettings
+from configs.logging_config import configure_logging
+from configs.settings import ScraperSettings
+from scraping.scraper import Scraper
 
 logger = logging.getLogger(__name__)
-
-
-def configure_logging():
-    logging.basicConfig(level=logging.INFO, format="%(levelname)s %(name)s: %(message)s")
 
 
 def read_urls(path: Path) -> list[str]:
