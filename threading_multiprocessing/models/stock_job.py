@@ -1,8 +1,7 @@
-import os
-
 from pydantic import BaseModel, ConfigDict, FilePath
 
 from models.stock import SUPPORTED_STOCKS, Stock
+from settings import MinerSettings
 
 
 class StockJob(BaseModel):
@@ -12,15 +11,8 @@ class StockJob(BaseModel):
     dates_file: FilePath
 
 
-def build_jobs(stocks: tuple[Stock, ...] = SUPPORTED_STOCKS) -> list[StockJob]:
-    jobs = [
-        StockJob(stock=stock, dates_file=os.environ[stock.dates_env_var])
-        for stock in stocks
-        if stock.dates_env_var in os.environ
+def build_jobs(settings: MinerSettings) -> list[StockJob]:
+    return [
+        StockJob(stock=SUPPORTED_STOCKS[env_var], dates_file=dates_file)
+        for env_var, dates_file in settings.dates_files.items()
     ]
-
-    if not jobs:
-        env_vars = ", ".join(stock.dates_env_var for stock in stocks)
-        raise ValueError(f"No stocks to mine, set at least one of: {env_vars}")
-
-    return jobs

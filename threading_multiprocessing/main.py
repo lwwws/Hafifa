@@ -16,7 +16,7 @@ def main():
     configure_logging()
 
     settings = MinerSettings()
-    jobs = build_jobs()
+    jobs = build_jobs(settings)
     logger.info(f"Mining {', '.join(job.stock.name for job in jobs)}")
 
     changes = mine_stocks(jobs, settings)
