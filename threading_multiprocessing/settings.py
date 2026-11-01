@@ -20,6 +20,7 @@ class MinerSettings(BaseSettings):
     destination_file: Path
     default_dates_timezone: ZoneInfo
     candle_interval: CandleInterval
+    max_workers: int = Field(default=4, gt=0)
     dates_files: dict[str, FilePath] = Field(default_factory=_read_dates_files, validate_default=True)
 
     @field_validator("candle_interval", mode="before")

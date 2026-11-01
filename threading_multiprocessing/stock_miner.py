@@ -17,7 +17,7 @@ def _run_job(job: StockJob, settings: MinerSettings) -> list[PriceChange]:
 
 
 def mine_stocks(jobs: list[StockJob], settings: MinerSettings) -> list[PriceChange]:
-    with ThreadPoolExecutor(max_workers=len(jobs)) as executor:
+    with ThreadPoolExecutor(max_workers=settings.max_workers) as executor:
         future_to_job = {executor.submit(_run_job, job, settings): job for job in jobs}
 
         changes = []
