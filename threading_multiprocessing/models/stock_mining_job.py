@@ -5,6 +5,8 @@ from settings import MinerSettings
 
 
 class StockMiningJob(BaseModel):
+    """A stock to mine and the file of timestamps to fetch its candle changes at."""
+
     model_config = ConfigDict(frozen=True)
 
     stock: Stock
