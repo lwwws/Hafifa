@@ -5,8 +5,8 @@ import pandas as pd
 import yfinance as yf
 
 from models.candle_interval import CandleInterval
-from models.price_change import PriceChange
 from models.stock import Stock
+from models.stock_snapshot import StockSnapshot
 
 logger = logging.getLogger(__name__)
 
@@ -28,7 +28,7 @@ def _change_percent(candle: pd.Series) -> float:
     return (candle["Close"] - candle["Open"]) / candle["Open"] * 100
 
 
-def fetch_price_changes(stock: Stock, timestamps: list[datetime], interval: CandleInterval) -> list[PriceChange]:
+def fetch_stock_snapshots(stock: Stock, timestamps: list[datetime], interval: CandleInterval) -> list[StockSnapshot]:
     if not timestamps:
         return []
 
@@ -43,13 +43,15 @@ def fetch_price_changes(stock: Stock, timestamps: list[datetime], interval: Cand
     # Daily/monthly candles come with second precision, we can't compare them with microsecond timestamps
     candles.index = candles.index.as_unit("us")
 
-    changes = []
+    snapshots = []
     for timestamp in timestamps:
         candle = _containing_candle(candles, timestamp, interval)
         if candle is not None:
-            changes.append(PriceChange(timestamp=timestamp, stock=stock.name, change_percent=_change_percent(candle)))
+            snapshots.append(
+                StockSnapshot(timestamp=timestamp, stock_name=stock.name, price_change_percent=_change_percent(candle))
+            )
 
-    found, skipped = len(changes), len(timestamps) - len(changes)
+    found, skipped = len(snapshots), len(timestamps) - len(snapshots)
     logger.info(f"{stock.name}: {found} of {len(timestamps)} timestamps have data, {skipped} skipped (no candle)")
 
-    return changes
+    return snapshots

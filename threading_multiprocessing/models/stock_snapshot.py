@@ -3,9 +3,9 @@ from datetime import datetime
 from pydantic import BaseModel, ConfigDict
 
 
-class PriceChange(BaseModel):
+class StockSnapshot(BaseModel):
     model_config = ConfigDict(frozen=True)
 
     timestamp: datetime
-    stock: str
-    change_percent: float
+    stock_name: str
+    price_change_percent: float

@@ -1,9 +1,9 @@
 import logging
 
-from changes_writer import write_changes
-from models.stock_job import build_jobs
+from models.stock_mining_job import build_stock_mining_jobs
 from settings import MinerSettings
 from stock_miner import mine_stocks
+from stock_snapshots_writer import write_stock_snapshots
 
 logger = logging.getLogger(__name__)
 
@@ -16,13 +16,13 @@ def main():
     configure_logging()
 
     settings = MinerSettings()
-    jobs = build_jobs(settings)
+    jobs = build_stock_mining_jobs(settings)
     logger.info(f"Mining {', '.join(job.stock.name for job in jobs)}")
 
-    changes = mine_stocks(jobs, settings)
+    snapshots = mine_stocks(jobs, settings)
 
-    write_changes(changes, settings.destination_file)
-    logger.info(f"Wrote {len(changes)} rows to {settings.destination_file}")
+    write_stock_snapshots(snapshots, settings.destination_file)
+    logger.info(f"Wrote {len(snapshots)} rows to {settings.destination_file}")
 
 
 if __name__ == "__main__":
