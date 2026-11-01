@@ -3,13 +3,13 @@ from concurrent.futures import ThreadPoolExecutor, as_completed
 from datetime import datetime
 
 import pandas as pd
-import yfinance as yf
 
 from dates_reader import read_dates
 from models.stock import Stock
 from models.stock_mining_job import StockMiningJob
 from models.stock_snapshot import StockSnapshot
 from settings import MinerSettings
+from yahoo_finance_client import YahooFinanceClient
 
 logger = logging.getLogger(__name__)
 
@@ -19,7 +19,8 @@ def _change_percent(candle: pd.Series) -> float:
 
 
 class StockMiner:
-    def __init__(self, settings: MinerSettings):
+    def __init__(self, settings: MinerSettings, yahoo_finance_client: YahooFinanceClient):
+        self._yahoo_finance_client = yahoo_finance_client
         self._candle_interval = settings.candle_interval
         self._default_timezone = settings.default_dates_timezone
         self._max_workers = settings.max_workers
@@ -65,18 +66,12 @@ class StockMiner:
         return snapshots
 
     def _fetch_candles(self, stock: Stock, first: datetime, last: datetime) -> pd.DataFrame:
-        candles = yf.Ticker(stock.ticker).history(
+        return self._yahoo_finance_client.fetch_candles(
+            stock.ticker,
             start=first - self._candle_interval.length,
             end=last + self._candle_interval.length,
-            interval=self._candle_interval.yahoo_name,
+            interval=self._candle_interval,
         )
-        if candles.empty:
-            return candles
-
-        # Daily/monthly candles come with second precision, we can't compare them with microsecond timestamps
-        candles.index = candles.index.as_unit("us")
-
-        return candles
 
     def _containing_candle(self, candles: pd.DataFrame, timestamp: datetime) -> pd.Series | None:
         start = candles.index.asof(timestamp)
