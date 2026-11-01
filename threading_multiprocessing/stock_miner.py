@@ -30,6 +30,7 @@ class StockMiner:
             future_to_job = {executor.submit(self._mine_stock, job): job for job in jobs}
 
             snapshots = []
+
             for future in as_completed(future_to_job):
                 try:
                     snapshots.extend(future.result())
@@ -40,17 +41,22 @@ class StockMiner:
 
     def _mine_stock(self, job: StockMiningJob) -> list[StockSnapshot]:
         timestamps = read_dates(job.dates_file, self._default_timezone)
+
         if not timestamps:
             return []
 
         candles = self._fetch_candles(job.stock, min(timestamps), max(timestamps))
+
         if candles.empty:
             logger.warning(f"{job.stock.name}: no candles returned for {job.stock.ticker}")
+
             return []
 
         snapshots = []
+
         for timestamp in timestamps:
             candle = self._containing_candle(candles, timestamp)
+
             if candle is not None:
                 snapshots.append(
                     StockSnapshot(

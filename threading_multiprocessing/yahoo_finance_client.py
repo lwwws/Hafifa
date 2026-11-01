@@ -9,6 +9,7 @@ from models.candle_interval import CandleInterval
 class YahooFinanceClient:
     def fetch_candles(self, ticker: str, start: datetime, end: datetime, interval: CandleInterval) -> pd.DataFrame:
         candles = yf.Ticker(ticker).history(start=start, end=end, interval=interval.yahoo_name)
+
         if candles.empty:
             return candles
 
