@@ -1,15 +1,12 @@
 import logging
 
+from logging_config import configure_logging
 from models.stock_mining_job import build_stock_mining_jobs
 from settings import MinerSettings
 from stock_miner import mine_stocks
 from stock_snapshots_writer import write_stock_snapshots
 
 logger = logging.getLogger(__name__)
-
-
-def configure_logging():
-    logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s [%(threadName)s] %(message)s")
 
 
 def main():

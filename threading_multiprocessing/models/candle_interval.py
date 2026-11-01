@@ -24,4 +24,5 @@ def interval_by_name(name: str) -> CandleInterval:
         return SUPPORTED_INTERVALS[name]
     except KeyError:
         supported = ", ".join(SUPPORTED_INTERVALS)
+
         raise ValueError(f"Unsupported candle interval {name!r}, expected one of: {supported}") from None
