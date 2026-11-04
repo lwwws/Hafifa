@@ -2,7 +2,7 @@ from pathlib import Path
 
 import pandas as pd
 
-from models.stock_snapshot import StockSnapshot
+from src.models.stock_snapshot import StockSnapshot
 
 
 def write_stock_snapshots(snapshots: list[StockSnapshot], path: Path):

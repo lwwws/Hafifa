@@ -6,8 +6,8 @@ from zoneinfo import ZoneInfo
 from pydantic import Field, FilePath, field_validator, model_validator
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
-from models.candle_interval import CandleInterval, interval_by_name
-from models.stock import SUPPORTED_STOCKS
+from src.models.candle_interval import CandleInterval, interval_by_name
+from src.models.stock import SUPPORTED_STOCKS
 
 
 def _read_dates_files() -> dict[str, str]:

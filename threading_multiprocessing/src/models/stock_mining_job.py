@@ -1,7 +1,7 @@
 from pydantic import BaseModel, ConfigDict, FilePath
 
-from models.stock import SUPPORTED_STOCKS, Stock
-from settings import MinerSettings
+from src.configs.settings import MinerSettings
+from src.models.stock import SUPPORTED_STOCKS, Stock
 
 
 class StockMiningJob(BaseModel):

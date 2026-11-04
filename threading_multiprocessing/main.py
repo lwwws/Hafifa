@@ -1,11 +1,11 @@
 import logging
 
-from logging_config import configure_logging
-from models.stock_mining_job import build_stock_mining_jobs
-from settings import MinerSettings
-from stock_miner import StockMiner
-from stock_snapshots_writer import write_stock_snapshots
-from yahoo_finance_client import YahooFinanceClient
+from src.clients.yahoo_finance_client import YahooFinanceClient
+from src.configs.logging_config import configure_logging
+from src.configs.settings import MinerSettings
+from src.file_io.stock_snapshots_writer import write_stock_snapshots
+from src.models.stock_mining_job import build_stock_mining_jobs
+from src.services.stock_miner import StockMiner
 
 logger = logging.getLogger(__name__)
 

@@ -4,12 +4,12 @@ from datetime import datetime
 
 import pandas as pd
 
-from dates_reader import read_dates
-from models.stock import Stock
-from models.stock_mining_job import StockMiningJob
-from models.stock_snapshot import StockSnapshot
-from settings import MinerSettings
-from yahoo_finance_client import YahooFinanceClient
+from src.clients.yahoo_finance_client import YahooFinanceClient
+from src.configs.settings import MinerSettings
+from src.file_io.dates_reader import read_dates
+from src.models.stock import Stock
+from src.models.stock_mining_job import StockMiningJob
+from src.models.stock_snapshot import StockSnapshot
 
 logger = logging.getLogger(__name__)
 
