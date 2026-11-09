@@ -4,6 +4,7 @@ import pytest
 from fastapi import status
 from httpx import Response
 
+from tests.api.conftest import MAX_REQUEST_BODY_SIZE_BYTES
 from tests.api.uploads import UPLOAD_URL, upload_content, upload_rows
 from tests.csv_rows import csv_row
 
@@ -49,6 +50,22 @@ def test_unusable_file_returns_bad_request_with_reason(client):
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {"detail": "File is empty"}
+
+
+def test_file_over_the_size_limit_is_rejected_before_parsing(client):
+    oversized_content = b"x" * (MAX_REQUEST_BODY_SIZE_BYTES + 1)
+
+    response = upload_content(client, "huge.csv", oversized_content)
+
+    assert response.status_code == status.HTTP_413_CONTENT_TOO_LARGE
+
+
+def test_chunked_body_without_content_length_is_cut_off_at_the_size_limit(client):
+    chunks = iter([b"x" * MAX_REQUEST_BODY_SIZE_BYTES, b"x"])
+
+    response = client.post(UPLOAD_URL, content=chunks, headers={"content-type": "multipart/form-data; boundary=b"})
+
+    assert response.status_code == status.HTTP_413_CONTENT_TOO_LARGE
 
 
 def test_request_without_file_is_unprocessable(client):

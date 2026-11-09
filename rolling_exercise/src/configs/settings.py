@@ -12,3 +12,4 @@ class ApiSettings(BaseSettings):
     alert_aqi_threshold: float = Field(ge=0)
     api_host: str
     api_port: int = Field(gt=0)
+    max_request_body_size_bytes: int = Field(gt=0)

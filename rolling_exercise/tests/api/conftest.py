@@ -5,6 +5,7 @@ from src.api.app import create_app
 from src.configs.settings import ApiSettings
 
 ALERT_AQI_THRESHOLD = 300
+MAX_REQUEST_BODY_SIZE_BYTES = 10_000
 
 
 @pytest.fixture
@@ -15,6 +16,7 @@ def client(tmp_path) -> TestClient:
         alert_aqi_threshold=ALERT_AQI_THRESHOLD,
         api_host="127.0.0.1",
         api_port=8000,
+        max_request_body_size_bytes=MAX_REQUEST_BODY_SIZE_BYTES,
     )
 
     return TestClient(create_app(settings))

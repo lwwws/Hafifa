@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+from starlette.middleware.body_limit import RequestBodyLimitMiddleware
 
 from src.api import air_quality_router, alerts_router, health_router, upload_router
 from src.api.exception_handlers import handle_city_not_found, handle_invalid_csv_file
@@ -18,5 +19,6 @@ def create_app(settings: ApiSettings) -> FastAPI:
     app.include_router(alerts_router.router)
     app.add_exception_handler(InvalidCsvFileError, handle_invalid_csv_file)
     app.add_exception_handler(CityNotFoundError, handle_city_not_found)
+    app.add_middleware(RequestBodyLimitMiddleware, max_body_size=settings.max_request_body_size_bytes)
 
     return app
