@@ -26,7 +26,8 @@ async def main():
         async_playwright() as playwright,
         await playwright.chromium.launch(channel=settings.browser_channel) as browser,
     ):
-        saved = await Scraper(browser, settings).capture_and_save_all(urls)
+        scraper = Scraper(browser, settings)
+        saved = await scraper.capture_and_save_all(urls)
 
     logger.info(f"Done: {saved}/{len(urls)} pages saved")
 
