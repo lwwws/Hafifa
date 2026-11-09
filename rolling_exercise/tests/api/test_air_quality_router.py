@@ -55,6 +55,16 @@ def test_city_query_matches_whatever_its_case(client):
     assert [record["city"] for record in response.json()] == ["haifa"]
 
 
+def test_aqi_history_returns_date_and_aqi_of_each_day(client):
+    upload_rows(client, csv_row(date="2024-11-19"), csv_row(date="2024-11-20"))
+
+    response = client.get("/air-quality/aqi-history", params={"city": "Haifa"})
+
+    assert response.status_code == status.HTTP_200_OK
+    assert [entry["date"] for entry in response.json()] == ["2024-11-19", "2024-11-20"]
+    assert [set(entry) for entry in response.json()] == [{"date", "aqi", "aqi_level"}] * 2
+
+
 def test_aqi_average_names_the_city(client):
     upload_rows(client, csv_row(city="Haifa"))
 
