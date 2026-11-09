@@ -1,12 +1,12 @@
 import asyncio
 import logging
-from pathlib import Path
 
 from playwright.async_api import Browser
 from playwright.async_api import Error as PlaywrightError
 
 from configs.settings import ScraperSettings
 from models.page_capture import PageCapture
+from storage.page_capture_writer import PageCaptureWriter
 
 logger = logging.getLogger(__name__)
 
@@ -19,8 +19,9 @@ class Scraper:
         url_N/browse.json      {"html", "resources", "screenshot" (base64 PNG)}
     """
 
-    def __init__(self, browser: Browser, settings: ScraperSettings):
+    def __init__(self, browser: Browser, writer: PageCaptureWriter, settings: ScraperSettings):
         self.browser = browser
+        self.writer = writer
         self.settings = settings
         self.semaphore = asyncio.Semaphore(settings.max_concurrent_pages)
 
@@ -35,11 +36,7 @@ class Scraper:
 
         return PageCapture(html=html, resources=resources, screenshot=screenshot)
 
-    def save(self, capture: PageCapture, out_dir: Path):
-        out_dir.mkdir(parents=True, exist_ok=True)
-        capture.save(out_dir / self.settings.screenshot_file, out_dir / self.settings.json_file)
-
-    async def capture_and_save(self, url: str, out_dir: Path) -> bool:
+    async def capture_and_save(self, url: str, folder_name: str) -> bool:
         try:
             async with self.semaphore:
                 capture = await self.capture(url)
@@ -48,14 +45,14 @@ class Scraper:
 
             return False
 
-        self.save(capture, out_dir)
-        logger.info(f"Saved {url} to {out_dir.name}")
+        self.writer.write(capture, folder_name)
+        logger.info(f"Saved {url} to {folder_name}")
 
         return True
 
     async def capture_and_save_all(self, urls: list[str]) -> int:
         saved_flags = await asyncio.gather(*(
-            self.capture_and_save(url, self.settings.output_dir / f"url_{index}")
+            self.capture_and_save(url, f"url_{index}")
             for index, url in enumerate(urls, start=1)
         ))
 

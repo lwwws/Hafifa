@@ -7,6 +7,7 @@ from playwright.async_api import async_playwright
 from configs.logging_config import configure_logging
 from configs.settings import ScraperSettings
 from scraping.scraper import Scraper
+from storage.page_capture_writer import PageCaptureWriter
 
 logger = logging.getLogger(__name__)
 
@@ -26,7 +27,8 @@ async def main():
         async_playwright() as playwright,
         await playwright.chromium.launch(channel=settings.browser_channel) as browser,
     ):
-        scraper = Scraper(browser, settings)
+        writer = PageCaptureWriter(settings.output_dir, settings.screenshot_file, settings.json_file)
+        scraper = Scraper(browser, writer, settings)
         saved = await scraper.capture_and_save_all(urls)
 
     logger.info(f"Done: {saved}/{len(urls)} pages saved")
