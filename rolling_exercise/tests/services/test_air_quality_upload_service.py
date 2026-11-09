@@ -57,7 +57,7 @@ def test_valid_row_is_saved_with_its_aqi(service, calculator, session):
     report = upload_rows(service, csv_row(city="Haifa"))
 
     (record,) = saved_records(session)
-    assert record.city == "Haifa"
+    assert record.city == "haifa"
     assert record.aqi == 42
     assert record.aqi_level == "Good"
     assert report.saved_rows == 1
@@ -69,7 +69,7 @@ def test_aqi_over_threshold_creates_alert(service, calculator, session):
     report = upload_rows(service, csv_row(city="Haifa"))
 
     (alert,) = saved_alerts(session)
-    assert alert.city == "Haifa"
+    assert alert.city == "haifa"
     assert alert.aqi == ALERT_AQI_THRESHOLD + 1
     assert report.created_alerts == 1
 
@@ -89,7 +89,7 @@ def test_city_that_already_has_data_for_the_date_is_rejected(service, session):
     report = upload_rows(service, csv_row(date="2024-11-19", city="Haifa"))
 
     assert len(saved_records(session)) == 1
-    assert report.rejected_rows == [RejectedRow(line_number=2, reason="Haifa already has data for 2024-11-19")]
+    assert report.rejected_rows == [RejectedRow(line_number=2, reason="haifa already has data for 2024-11-19")]
 
 
 def test_duplicate_check_ignores_city_case(service, session):
@@ -120,7 +120,7 @@ def test_same_city_and_date_twice_in_file_keeps_the_first(service, session):
 def test_invalid_row_is_reported_and_not_saved(service, session):
     report = upload_rows(service, csv_row(city="Haifa"), csv_row(city="Akko", no2=""))
 
-    assert [record.city for record in saved_records(session)] == ["Haifa"]
+    assert [record.city for record in saved_records(session)] == ["haifa"]
     assert rejected_lines(report) == [3]
 
 

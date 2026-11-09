@@ -4,6 +4,7 @@ from fastapi import APIRouter
 
 from src.api.dependencies import AlertQueryServiceDependency
 from src.models.alert_response import AlertResponse
+from src.models.city_name import CityName
 
 router = APIRouter(prefix="/alerts", tags=["alerts"])
 
@@ -19,5 +20,5 @@ def get_alerts_by_date(date: datetime.date, alert_query_service: AlertQueryServi
 
 
 @router.get("/by-city")
-def get_alerts_by_city(city: str, alert_query_service: AlertQueryServiceDependency) -> list[AlertResponse]:
+def get_alerts_by_city(city: CityName, alert_query_service: AlertQueryServiceDependency) -> list[AlertResponse]:
     return alert_query_service.get_by_city(city)

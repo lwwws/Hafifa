@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import ColumnElement, func, select
+from sqlalchemy import func, select
 from sqlalchemy.orm import Session
 
 from src.db.air_quality_record import AirQualityRecord
@@ -30,12 +30,12 @@ class AirQualityRepository:
         return list(self._session.scalars(query))
 
     def get_by_city(self, city: str) -> list[AirQualityRecord]:
-        query = select(AirQualityRecord).where(self._is_city(city)).order_by(AirQualityRecord.date)
+        query = select(AirQualityRecord).where(AirQualityRecord.city == city).order_by(AirQualityRecord.date)
 
         return list(self._session.scalars(query))
 
     def get_city_aqi_average(self, city: str) -> float | None:
-        return self._session.scalar(select(func.avg(AirQualityRecord.aqi)).where(self._is_city(city)))
+        return self._session.scalar(select(func.avg(AirQualityRecord.aqi)).where(AirQualityRecord.city == city))
 
     def get_best_cities(self, count: int) -> list[CityAverageAqi]:
         average_aqi = func.avg(AirQualityRecord.aqi).label("average_aqi")
@@ -47,6 +47,3 @@ class AirQualityRepository:
         )
 
         return [CityAverageAqi(city=city, average_aqi=aqi) for city, aqi in self._session.execute(query)]
-
-    def _is_city(self, city: str) -> ColumnElement[bool]:
-        return func.lower(AirQualityRecord.city) == city.lower()

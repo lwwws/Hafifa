@@ -41,9 +41,18 @@ def test_by_city_returns_city_records_of_every_day(client):
 
     assert response.status_code == status.HTTP_200_OK
     assert [(record["date"], record["city"]) for record in response.json()] == [
-        ("2024-11-19", "Haifa"),
-        ("2024-11-20", "Haifa"),
+        ("2024-11-19", "haifa"),
+        ("2024-11-20", "haifa"),
     ]
+
+
+def test_city_query_matches_whatever_its_case(client):
+    upload_rows(client, csv_row(city="Haifa"))
+
+    response = client.get("/air-quality/by-city", params={"city": "HAIFA"})
+
+    assert response.status_code == status.HTTP_200_OK
+    assert [record["city"] for record in response.json()] == ["haifa"]
 
 
 def test_aqi_average_names_the_city(client):
@@ -52,7 +61,7 @@ def test_aqi_average_names_the_city(client):
     response = client.get("/air-quality/aqi-average", params={"city": "Haifa"})
 
     assert response.status_code == status.HTTP_200_OK
-    assert response.json()["city"] == "Haifa"
+    assert response.json()["city"] == "haifa"
 
 
 def test_best_cities_returns_three_by_default(client):
@@ -86,4 +95,4 @@ def test_unknown_city_is_not_found(client, url):
     response = client.get(url, params={"city": "Atlantis"})
 
     assert response.status_code == status.HTTP_404_NOT_FOUND
-    assert response.json() == {"detail": "No air quality data for Atlantis"}
+    assert response.json() == {"detail": "No air quality data for atlantis"}

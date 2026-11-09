@@ -18,7 +18,7 @@ def test_only_rows_over_the_threshold_become_alerts(client):
     response = client.get("/alerts")
 
     assert response.status_code == status.HTTP_200_OK
-    assert response.json() == [{"date": "2024-11-19", "city": "Akko", "aqi": 500}]
+    assert response.json() == [{"date": "2024-11-19", "city": "akko", "aqi": 500}]
 
 
 def test_alerts_by_date_returns_only_that_date(client):
@@ -44,7 +44,7 @@ def test_alerts_by_city_returns_only_that_city(client):
     response = client.get("/alerts/by-city", params={"city": "Haifa"})
 
     assert response.status_code == status.HTTP_200_OK
-    assert [alert["city"] for alert in response.json()] == ["Haifa"]
+    assert [alert["city"] for alert in response.json()] == ["haifa"]
 
 
 @pytest.mark.parametrize("city", ["Haifa", "Atlantis"], ids=["city with clean air", "unknown city"])

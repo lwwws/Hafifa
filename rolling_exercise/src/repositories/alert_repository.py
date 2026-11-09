@@ -1,6 +1,6 @@
 import datetime
 
-from sqlalchemy import func, select
+from sqlalchemy import select
 from sqlalchemy.orm import Session
 
 from src.db.alert import Alert
@@ -17,6 +17,6 @@ class AlertRepository:
         return list(self._session.scalars(select(Alert).where(Alert.date == date).order_by(Alert.city)))
 
     def get_by_city(self, city: str) -> list[Alert]:
-        query = select(Alert).where(func.lower(Alert.city) == city.lower()).order_by(Alert.date)
+        query = select(Alert).where(Alert.city == city).order_by(Alert.date)
 
         return list(self._session.scalars(query))

@@ -2,6 +2,8 @@ import datetime
 
 from pydantic import BaseModel, ConfigDict, Field
 
+from src.models.city_name import CityName
+
 
 class AirQualityReading(BaseModel):
     """One validated row of an uploaded file."""
@@ -10,7 +12,7 @@ class AirQualityReading(BaseModel):
 
     line_number: int
     date: datetime.date
-    city: str = Field(min_length=1)
+    city: CityName
     pm25: float = Field(ge=0, allow_inf_nan=False)
     no2: float = Field(ge=0, allow_inf_nan=False)
     co2: float = Field(ge=0, allow_inf_nan=False)

@@ -18,6 +18,12 @@ def test_valid_row_becomes_reading():
     assert parsed.rejected_rows == []
 
 
+def test_city_is_stored_in_one_form_whatever_its_case_and_spacing():
+    parsed = AirQualityCsvParser().parse(to_csv_file(csv_row(city="  Tel AVIV ")))
+
+    assert [reading.city for reading in parsed.readings] == ["tel aviv"]
+
+
 def test_zero_pollutant_values_are_valid():
     parsed = AirQualityCsvParser().parse(to_csv_file(csv_row(pm25="0", no2="0", co2="0")))
 
@@ -47,7 +53,7 @@ def test_invalid_value_rejects_row_and_names_the_column(row, rejected_column):
 def test_invalid_row_does_not_stop_valid_rows():
     parsed = AirQualityCsvParser().parse(to_csv_file(csv_row(city="Haifa"), csv_row(city="Akko", no2="")))
 
-    assert [reading.city for reading in parsed.readings] == ["Haifa"]
+    assert [reading.city for reading in parsed.readings] == ["haifa"]
     assert [rejected_row.line_number for rejected_row in parsed.rejected_rows] == [3]
 
 

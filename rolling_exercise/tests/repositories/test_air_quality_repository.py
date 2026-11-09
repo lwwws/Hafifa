@@ -56,12 +56,12 @@ def test_get_by_date_range_is_ordered_by_date_then_city(repository):
     assert [record.city for record in records] == ["Eilat", "Akko", "Haifa"]
 
 
-def test_get_by_city_ignores_case(repository):
-    repository.save_all([make_record(city="Haifa"), make_record(city="Akko")])
+def test_get_by_city_returns_only_that_city(repository):
+    repository.save_all([make_record(city="haifa"), make_record(city="akko")])
 
     records = repository.get_by_city("haifa")
 
-    assert [record.city for record in records] == ["Haifa"]
+    assert [record.city for record in records] == ["haifa"]
 
 
 def test_get_city_aqi_average_counts_only_that_city(repository):

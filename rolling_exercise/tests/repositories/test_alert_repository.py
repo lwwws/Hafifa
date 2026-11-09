@@ -53,14 +53,14 @@ def test_get_by_date_returns_only_that_date(repository, air_quality_repository):
     assert [alert.city for alert in alerts] == ["Akko"]
 
 
-def test_get_by_city_ignores_case(repository, air_quality_repository):
+def test_get_by_city_returns_only_that_city(repository, air_quality_repository):
     air_quality_repository.save_all(
         [
-            make_record(city="Haifa", with_alert=True),
-            make_record(city="Akko", with_alert=True),
+            make_record(city="haifa", with_alert=True),
+            make_record(city="akko", with_alert=True),
         ]
     )
 
-    alerts = repository.get_by_city("HAIFA")
+    alerts = repository.get_by_city("haifa")
 
-    assert [alert.city for alert in alerts] == ["Haifa"]
+    assert [alert.city for alert in alerts] == ["haifa"]
