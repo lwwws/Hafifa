@@ -1,4 +1,5 @@
 import logging
+from typing import BinaryIO
 
 from src.db.air_quality_record import AirQualityRecord
 from src.db.alert import Alert
@@ -27,10 +28,10 @@ class AirQualityUploadService:
         self._air_quality_repository = air_quality_repository
         self._alert_aqi_threshold = alert_aqi_threshold
 
-    def upload(self, file_name: str, file_content: bytes) -> UploadReport:
+    def upload(self, file_name: str, file: BinaryIO) -> UploadReport:
         logger.info(f"Processing upload {file_name}")
 
-        parsed_upload = self._parser.parse(file_content)
+        parsed_upload = self._parser.parse(file)
         new_readings, duplicate_rows = self._reject_duplicates(parsed_upload.readings)
         records = [self._to_record(reading) for reading in new_readings]
         self._air_quality_repository.save_all(records)

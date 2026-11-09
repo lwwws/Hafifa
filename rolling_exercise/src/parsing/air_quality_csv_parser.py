@@ -1,6 +1,7 @@
 import csv
 import io
 import logging
+from typing import BinaryIO
 
 from pydantic import ValidationError
 
@@ -16,12 +17,23 @@ COLUMN_BY_FIELD = {field: column for column, field in FIELD_BY_COLUMN.items()}
 
 
 class AirQualityCsvParser:
-    """Turns an uploaded CSV into valid readings, keeping the rows that failed validation and why."""
+    """
+    Turns an uploaded CSV into valid readings, keeping the rows that failed validation and why.
+    """
 
-    def parse(self, file_content: bytes) -> ParsedUpload:
-        reader = csv.DictReader(io.StringIO(self._decode(file_content)))
+    def parse(self, file: BinaryIO) -> ParsedUpload:
+        text_stream = io.TextIOWrapper(file, encoding="utf-8-sig", newline="")
+
+        try:
+            return self._parse_rows(csv.DictReader(text_stream))
+        except UnicodeDecodeError:
+            raise InvalidCsvFileError("File is not a UTF-8 text file")
+        finally:
+            # Closing the wrapper would close the caller's file too, so hand the file back instead
+            text_stream.detach()
+
+    def _parse_rows(self, reader: csv.DictReader) -> ParsedUpload:
         self._check_columns(reader.fieldnames)
-
         readings = []
         rejected_rows = []
 
@@ -36,12 +48,6 @@ class AirQualityCsvParser:
         logger.info(f"Parsed {len(readings)} valid rows, rejected {len(rejected_rows)}")
 
         return ParsedUpload(readings=readings, rejected_rows=rejected_rows)
-
-    def _decode(self, file_content: bytes) -> str:
-        try:
-            return file_content.decode("utf-8-sig")
-        except UnicodeDecodeError:
-            raise InvalidCsvFileError("File is not a UTF-8 text file")
 
     def _check_columns(self, columns: list[str] | None):
         if not columns:

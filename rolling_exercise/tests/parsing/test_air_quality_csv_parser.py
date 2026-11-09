@@ -1,15 +1,16 @@
 import datetime
+import io
 
 import pytest
 
 from src.errors import InvalidCsvFileError
 from src.models.air_quality_reading import AirQualityReading
 from src.parsing.air_quality_csv_parser import AirQualityCsvParser
-from tests.csv_rows import csv_row, to_csv
+from tests.csv_rows import csv_row, to_csv, to_csv_file
 
 
 def test_valid_row_becomes_reading():
-    parsed = AirQualityCsvParser().parse(to_csv("2024-11-19,Haifa,12,40,3"))
+    parsed = AirQualityCsvParser().parse(to_csv_file("2024-11-19,Haifa,12,40,3"))
 
     assert parsed.readings == [
         AirQualityReading(line_number=2, date=datetime.date(2024, 11, 19), city="Haifa", pm25=12, no2=40, co2=3)
@@ -18,7 +19,7 @@ def test_valid_row_becomes_reading():
 
 
 def test_zero_pollutant_values_are_valid():
-    parsed = AirQualityCsvParser().parse(to_csv(csv_row(pm25="0", no2="0", co2="0")))
+    parsed = AirQualityCsvParser().parse(to_csv_file(csv_row(pm25="0", no2="0", co2="0")))
 
     assert len(parsed.readings) == 1
     assert parsed.rejected_rows == []
@@ -36,7 +37,7 @@ def test_zero_pollutant_values_are_valid():
     ],
 )
 def test_invalid_value_rejects_row_and_names_the_column(row, rejected_column):
-    parsed = AirQualityCsvParser().parse(to_csv(row))
+    parsed = AirQualityCsvParser().parse(to_csv_file(row))
 
     assert parsed.readings == []
     assert len(parsed.rejected_rows) == 1
@@ -44,7 +45,7 @@ def test_invalid_value_rejects_row_and_names_the_column(row, rejected_column):
 
 
 def test_invalid_row_does_not_stop_valid_rows():
-    parsed = AirQualityCsvParser().parse(to_csv(csv_row(city="Haifa"), csv_row(city="Akko", no2="")))
+    parsed = AirQualityCsvParser().parse(to_csv_file(csv_row(city="Haifa"), csv_row(city="Akko", no2="")))
 
     assert [reading.city for reading in parsed.readings] == ["Haifa"]
     assert [rejected_row.line_number for rejected_row in parsed.rejected_rows] == [3]
@@ -60,4 +61,20 @@ def test_invalid_row_does_not_stop_valid_rows():
 )
 def test_unusable_file_raises(file_content, expected_message):
     with pytest.raises(InvalidCsvFileError, match=expected_message):
-        AirQualityCsvParser().parse(file_content)
+        AirQualityCsvParser().parse(io.BytesIO(file_content))
+
+
+def test_non_utf8_bytes_deep_in_the_file_raise():
+    many_valid_rows = [csv_row(city=f"City{index}") for index in range(1_000)]
+    file = io.BytesIO(to_csv(*many_valid_rows) + b"\n\xff\xfe")
+
+    with pytest.raises(InvalidCsvFileError, match="File is not a UTF-8 text file"):
+        AirQualityCsvParser().parse(file)
+
+
+def test_parsing_leaves_the_file_open_for_its_owner():
+    file = to_csv_file(csv_row())
+
+    AirQualityCsvParser().parse(file)
+
+    assert not file.closed

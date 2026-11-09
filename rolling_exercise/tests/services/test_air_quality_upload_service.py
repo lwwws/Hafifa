@@ -1,3 +1,4 @@
+import io
 from unittest.mock import Mock
 
 import pytest
@@ -14,7 +15,7 @@ from src.parsing.air_quality_csv_parser import AirQualityCsvParser
 from src.repositories.air_quality_repository import AirQualityRepository
 from src.services.air_quality_upload_service import AirQualityUploadService
 from src.services.aqi_calculator import AqiCalculator
-from tests.csv_rows import csv_row, to_csv
+from tests.csv_rows import csv_row, to_csv_file
 
 ALERT_AQI_THRESHOLD = 300
 
@@ -35,7 +36,7 @@ def service(calculator, session) -> AirQualityUploadService:
 
 
 def upload_rows(service: AirQualityUploadService, *rows: str) -> UploadReport:
-    return service.upload("air_quality.csv", to_csv(*rows))
+    return service.upload("air_quality.csv", to_csv_file(*rows))
 
 
 def saved_records(session: Session) -> list[AirQualityRecord]:
@@ -131,6 +132,6 @@ def test_duplicate_and_invalid_rows_are_reported_in_line_order(service):
 
 def test_unusable_file_saves_nothing(service, session):
     with pytest.raises(InvalidCsvFileError):
-        service.upload("empty.csv", b"")
+        service.upload("empty.csv", io.BytesIO(b""))
 
     assert saved_records(session) == []
