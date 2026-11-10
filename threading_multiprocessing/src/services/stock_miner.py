@@ -25,9 +25,9 @@ class StockMiner:
         self._default_timezone = settings.default_dates_timezone
         self._max_workers = settings.max_workers
 
-    def mine_stocks(self, jobs: list[StockMiningJob]) -> list[StockSnapshot]:
+    def mine_stocks_concurrently(self, jobs: list[StockMiningJob]) -> list[StockSnapshot]:
         with ThreadPoolExecutor(max_workers=self._max_workers) as executor:
-            future_to_job = {executor.submit(self._mine_stock, job): job for job in jobs}
+            future_to_job = {executor.submit(self._collect_stock_snapshots, job): job for job in jobs}
 
             snapshots = []
 
@@ -39,7 +39,7 @@ class StockMiner:
 
         return snapshots
 
-    def _mine_stock(self, job: StockMiningJob) -> list[StockSnapshot]:
+    def _collect_stock_snapshots(self, job: StockMiningJob) -> list[StockSnapshot]:
         timestamps = read_dates(job.dates_file, self._default_timezone)
 
         if not timestamps:
@@ -52,24 +52,29 @@ class StockMiner:
 
             return []
 
+        snapshots = self._snapshots_at_timestamps(job.stock, candles, timestamps)
+        self._log_coverage(job.stock, len(snapshots), len(timestamps))
+
+        return snapshots
+
+    def _snapshots_at_timestamps(
+        self, stock: Stock, candles: pd.DataFrame, timestamps: list[datetime]
+    ) -> list[StockSnapshot]:
         snapshots = []
 
         for timestamp in timestamps:
             candle = self._containing_candle(candles, timestamp)
 
             if candle is not None:
+                price_change_percent = _change_percent(candle)
                 snapshots.append(
-                    StockSnapshot(
-                        timestamp=timestamp, stock_name=job.stock.name, price_change_percent=_change_percent(candle),
-                    )
+                    StockSnapshot(timestamp=timestamp, stock_name=stock.name, price_change_percent=price_change_percent)
                 )
 
-        found, skipped = len(snapshots), len(timestamps) - len(snapshots)
-        logger.info(
-            f"{job.stock.name}: {found} of {len(timestamps)} timestamps have data, {skipped} skipped (no candle)"
-        )
-
         return snapshots
+
+    def _log_coverage(self, stock: Stock, found: int, total: int):
+        logger.info(f"{stock.name}: {found} of {total} timestamps have data, {total - found} skipped (no candle)")
 
     def _fetch_candles(self, stock: Stock, first: datetime, last: datetime) -> pd.DataFrame:
         return self._yahoo_finance_client.fetch_candles(

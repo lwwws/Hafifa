@@ -19,7 +19,7 @@ def main():
 
     yahoo_finance_client = YahooFinanceClient()
     stock_miner = StockMiner(settings, yahoo_finance_client)
-    snapshots = stock_miner.mine_stocks(jobs)
+    snapshots = stock_miner.mine_stocks_concurrently(jobs)
 
     write_stock_snapshots(snapshots, settings.destination_file)
     logger.info(f"Wrote {len(snapshots)} rows to {settings.destination_file}")
