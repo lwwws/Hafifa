@@ -14,8 +14,6 @@ logger = logging.getLogger(__name__)
 
 
 class AirQualityUploadService:
-    """Turns an uploaded CSV into saved air quality records, with an alert for each record over the threshold."""
-
     def __init__(
         self,
         parser: AirQualityCsvParser,

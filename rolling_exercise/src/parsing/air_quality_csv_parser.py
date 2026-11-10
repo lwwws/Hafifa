@@ -17,10 +17,6 @@ COLUMN_BY_FIELD = {field: column for column, field in FIELD_BY_COLUMN.items()}
 
 
 class AirQualityCsvParser:
-    """
-    Turns an uploaded CSV into valid readings, keeping the rows that failed validation and why.
-    """
-
     def parse(self, file: BinaryIO) -> ParsedUpload:
         text_stream = io.TextIOWrapper(file, encoding="utf-8-sig", newline="")
 

@@ -14,7 +14,6 @@ from src.services.aqi_calculator import AqiCalculator
 
 
 def get_session(request: Request) -> Iterator[Session]:
-    """One session per request, closed when the response is sent."""
     with request.app.state.session_factory() as session:
         yield session
 

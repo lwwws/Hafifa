@@ -6,8 +6,6 @@ from src.models.city_name import CityName
 
 
 class AirQualityReading(BaseModel):
-    """One validated row of an uploaded file."""
-
     model_config = ConfigDict(frozen=True, str_strip_whitespace=True)
 
     line_number: int
