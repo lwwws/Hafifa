@@ -11,7 +11,6 @@ def make_record(
     aqi_level: str = "Good",
     with_alert: bool = False,
 ) -> AirQualityRecord:
-    """A valid record. Tests override only the values that matter to them."""
     record = AirQualityRecord(date=date, city=city, pm25=10, no2=20, co2=3, aqi=aqi, aqi_level=aqi_level)
 
     if with_alert:
