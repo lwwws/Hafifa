@@ -1,10 +1,20 @@
 import io
 from typing import BinaryIO
 
+from tests.providers.aqi import Co2, No2, Pm25
+from tests.providers.cities import City
+from tests.providers.dates import Day
+
 HEADER = "date,city,PM2.5,NO2,CO2"
 
 
-def csv_row(date: str = "2024-11-19", city: str = "Haifa", pm25: str = "12", no2: str = "40", co2: str = "3") -> str:
+def csv_row(
+    date: str = Day.DEFAULT.isoformat(),
+    city: str = City.DEFAULT,
+    pm25: str = str(Pm25.GOOD),
+    no2: str = str(No2.GOOD),
+    co2: str = str(Co2.GOOD),
+) -> str:
     return f"{date},{city},{pm25},{no2},{co2}"
 
 
