@@ -1,9 +1,9 @@
 from pydantic import BaseModel
 
-from src.models.air_quality_reading import AirQualityReading
 from src.models.rejected_row import RejectedRow
+from src.models.valid_row import ValidRow
 
 
 class ParsedUpload(BaseModel):
-    readings: list[AirQualityReading]
+    valid_rows: list[ValidRow]
     rejected_rows: list[RejectedRow]

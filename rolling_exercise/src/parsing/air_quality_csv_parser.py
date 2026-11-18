@@ -9,6 +9,7 @@ from src.errors import InvalidCsvFileError
 from src.models.air_quality_reading import AirQualityReading
 from src.models.parsed_upload import ParsedUpload
 from src.models.rejected_row import RejectedRow
+from src.models.valid_row import ValidRow
 
 logger = logging.getLogger(__name__)
 
@@ -30,20 +31,20 @@ class AirQualityCsvParser:
 
     def _parse_rows(self, reader: csv.DictReader) -> ParsedUpload:
         self._check_columns(reader.fieldnames)
-        readings = []
+        valid_rows = []
         rejected_rows = []
 
         for row in reader:
             try:
-                readings.append(self._to_reading(row, reader.line_num))
+                valid_rows.append(ValidRow(line_number=reader.line_num, reading=self._to_reading(row)))
             except ValidationError as error:
                 rejected_row = RejectedRow(line_number=reader.line_num, reason=self._to_rejection_reason(error))
                 logger.warning(f"Rejected line {rejected_row.line_number}: {rejected_row.reason}")
                 rejected_rows.append(rejected_row)
 
-        logger.info(f"Parsed {len(readings)} valid rows, rejected {len(rejected_rows)}")
+        logger.info(f"Parsed {len(valid_rows)} valid rows, rejected {len(rejected_rows)}")
 
-        return ParsedUpload(readings=readings, rejected_rows=rejected_rows)
+        return ParsedUpload(valid_rows=valid_rows, rejected_rows=rejected_rows)
 
     def _check_columns(self, columns: list[str] | None):
         if not columns:
@@ -54,10 +55,10 @@ class AirQualityCsvParser:
         if missing_columns:
             raise InvalidCsvFileError(f"Missing columns: {', '.join(missing_columns)}")
 
-    def _to_reading(self, row: dict[str, str], line_number: int) -> AirQualityReading:
+    def _to_reading(self, row: dict[str, str]) -> AirQualityReading:
         fields = {field: row[column] for column, field in FIELD_BY_COLUMN.items()}
 
-        return AirQualityReading.model_validate({"line_number": line_number, **fields})
+        return AirQualityReading.model_validate(fields)
 
     def _to_rejection_reason(self, error: ValidationError) -> str:
         return "; ".join(f"{COLUMN_BY_FIELD[issue['loc'][0]]}: {issue['msg']}" for issue in error.errors())
