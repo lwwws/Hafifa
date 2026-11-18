@@ -1,4 +1,5 @@
 import csv
+import datetime
 import io
 import logging
 from collections import Counter
@@ -16,6 +17,7 @@ logger = logging.getLogger(__name__)
 
 FIELD_BY_COLUMN = {"date": "date", "city": "city", "PM2.5": "pm25", "NO2": "no2", "CO2": "co2"}
 COLUMN_BY_FIELD = {field: column for column, field in FIELD_BY_COLUMN.items()}
+CSV_DATE_FORMAT = "%Y-%m-%d"
 
 
 class AirQualityCsvParser:
@@ -74,11 +76,18 @@ class AirQualityCsvParser:
 
         row = dict(zip(columns, values))
         fields = {field: row[column] for column, field in FIELD_BY_COLUMN.items()}
+        fields["date"] = self._to_date(row["date"])
 
         try:
             return AirQualityReading.model_validate(fields)
         except ValidationError as error:
             raise InvalidRowError(self._to_rejection_reason(error))
+
+    def _to_date(self, value: str) -> datetime.date:
+        try:
+            return datetime.datetime.strptime(value, CSV_DATE_FORMAT).date()
+        except ValueError:
+            raise InvalidRowError(f"date: Expected a date in YYYY-MM-DD format, got '{value}'")
 
     def _to_rejection_reason(self, error: ValidationError) -> str:
         return "; ".join(f"{COLUMN_BY_FIELD[issue['loc'][0]]}: {issue['msg']}" for issue in error.errors())

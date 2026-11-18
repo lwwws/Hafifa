@@ -39,6 +39,8 @@ def test_zero_pollutant_values_are_valid():
         (CsvRow.NEGATIVE_PM25, "PM2.5"),
         (CsvRow.NON_NUMERIC_PM25, "PM2.5"),
         (CsvRow.INVALID_DATE, "date"),
+        (CsvRow.TIMESTAMP_DATE, "date"),
+        (CsvRow.DATE_WITH_TIME, "date"),
         (CsvRow.EMPTY_CITY, "city"),
     ],
 )
