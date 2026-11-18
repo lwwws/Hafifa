@@ -59,6 +59,34 @@ def test_invalid_value_rejects_row_and_names_the_column(row, rejected_column):
     assert parsed.rejected_rows[0].reason.startswith(f"{rejected_column}:")
 
 
+@pytest.mark.parametrize(
+    ("file_content", "expected_reason"),
+    [
+        (CsvFileContent.ROW_WITH_EXTRA_VALUE, "Expected 5 values, got 6"),
+        (CsvFileContent.ROW_WITH_MISSING_VALUES, "Expected 5 values, got 3"),
+    ],
+)
+def test_row_with_wrong_number_of_values_is_rejected(file_content, expected_reason):
+    parsed = AirQualityCsvParser().parse(io.BytesIO(file_content))
+
+    assert parsed.valid_rows == []
+    assert [rejected_row.reason for rejected_row in parsed.rejected_rows] == [expected_reason]
+
+
+def test_unknown_extra_column_is_ignored():
+    parsed = AirQualityCsvParser().parse(io.BytesIO(CsvFileContent.UNKNOWN_EXTRA_COLUMN))
+
+    assert len(parsed.valid_rows) == 1
+    assert parsed.rejected_rows == []
+
+
+def test_blank_lines_are_skipped():
+    parsed = AirQualityCsvParser().parse(io.BytesIO(CsvFileContent.BLANK_LINES_BETWEEN_ROWS))
+
+    assert len(parsed.valid_rows) == 2
+    assert parsed.rejected_rows == []
+
+
 def test_invalid_row_does_not_stop_valid_rows():
     parsed = AirQualityCsvParser().parse(
         to_csv_file(csv_row(city=City.DEFAULT), csv_row(city=City.OTHER, no2=CsvValue.EMPTY))
@@ -74,6 +102,9 @@ def test_invalid_row_does_not_stop_valid_rows():
         (CsvFileContent.EMPTY, "File is empty"),
         (CsvFileContent.MISSING_NO2_AND_CO2, "Missing columns: NO2, CO2"),
         (CsvFileContent.NOT_UTF8, "File is not a UTF-8 text file"),
+        (CsvFileContent.DUPLICATE_CITY_COLUMN, "Duplicate columns: city"),
+        (CsvFileContent.TEXT_AFTER_CLOSING_QUOTE, "File is not a valid CSV"),
+        (CsvFileContent.VALUE_OVER_CSV_FIELD_LIMIT, "File is not a valid CSV"),
     ],
 )
 def test_unusable_file_raises(file_content, expected_message):
