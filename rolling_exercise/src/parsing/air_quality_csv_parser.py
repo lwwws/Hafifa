@@ -46,11 +46,9 @@ class AirQualityCsvParser:
                 continue
 
             try:
-                valid_rows.append(ValidRow(line_number=reader.line_num, reading=self._to_reading(columns, values)))
+                valid_rows.append(self._to_valid_row(reader.line_num, columns, values))
             except InvalidRowError as error:
-                rejected_row = RejectedRow(line_number=reader.line_num, reason=str(error))
-                logger.warning(f"Rejected line {rejected_row.line_number}: {rejected_row.reason}")
-                rejected_rows.append(rejected_row)
+                rejected_rows.append(self._to_rejected_row(reader.line_num, error))
 
         logger.info(f"Parsed {len(valid_rows)} valid rows, rejected {len(rejected_rows)}")
 
@@ -69,6 +67,15 @@ class AirQualityCsvParser:
 
         if missing_columns:
             raise InvalidCsvFileError(f"Missing columns: {', '.join(missing_columns)}")
+
+    def _to_valid_row(self, line_number: int, columns: list[str], values: list[str]) -> ValidRow:
+        return ValidRow(line_number=line_number, reading=self._to_reading(columns, values))
+
+    def _to_rejected_row(self, line_number: int, error: InvalidRowError) -> RejectedRow:
+        rejected_row = RejectedRow(line_number=line_number, reason=str(error))
+        logger.warning(f"Rejected line {rejected_row.line_number}: {rejected_row.reason}")
+
+        return rejected_row
 
     def _to_reading(self, columns: list[str], values: list[str]) -> AirQualityReading:
         if len(values) != len(columns):
