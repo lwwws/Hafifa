@@ -37,7 +37,7 @@ class AirQualityCsvParser:
     def _parse_rows(self, text_stream: TextIO) -> ParsedUpload:
         reader = csv.reader(text_stream, strict=True)
         columns = next(reader, [])
-        self._check_columns(columns)
+        self._validate_columns(columns)
         valid_rows = []
         rejected_rows = []
 
@@ -54,15 +54,20 @@ class AirQualityCsvParser:
 
         return ParsedUpload(valid_rows=valid_rows, rejected_rows=rejected_rows)
 
-    def _check_columns(self, columns: list[str]):
+    def _validate_columns(self, columns: list[str]):
         if not columns:
             raise InvalidCsvFileError("File is empty")
 
+        self._validate_no_duplicate_columns(columns)
+        self._validate_no_missing_columns(columns)
+
+    def _validate_no_duplicate_columns(self, columns: list[str]):
         duplicate_columns = [column for column, count in Counter(columns).items() if count > 1]
 
         if duplicate_columns:
             raise InvalidCsvFileError(f"Duplicate columns: {', '.join(duplicate_columns)}")
 
+    def _validate_no_missing_columns(self, columns: list[str]):
         missing_columns = [column for column in FIELD_BY_COLUMN if column not in columns]
 
         if missing_columns:
@@ -83,18 +88,18 @@ class AirQualityCsvParser:
 
         row = dict(zip(columns, values))
         fields = {field: row[column] for column, field in FIELD_BY_COLUMN.items()}
-        fields["date"] = self._to_date(row["date"])
+        fields["date"] = self._parse_csv_date(row["date"])
 
         try:
             return AirQualityReading.model_validate(fields)
         except ValidationError as error:
             raise InvalidRowError(self._to_rejection_reason(error))
 
-    def _to_date(self, value: str) -> datetime.date:
+    def _parse_csv_date(self, csv_date: str) -> datetime.date:
         try:
-            return datetime.datetime.strptime(value, CSV_DATE_FORMAT).date()
+            return datetime.datetime.strptime(csv_date, CSV_DATE_FORMAT).date()
         except ValueError:
-            raise InvalidRowError(f"date: Expected a date in YYYY-MM-DD format, got '{value}'")
+            raise InvalidRowError(f"date: Expected a date in YYYY-MM-DD format, got '{csv_date}'")
 
     def _to_rejection_reason(self, error: ValidationError) -> str:
         return "; ".join(f"{COLUMN_BY_FIELD[issue['loc'][0]]}: {issue['msg']}" for issue in error.errors())
