@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 from typing import TYPE_CHECKING
 
@@ -12,15 +14,16 @@ if TYPE_CHECKING:
 
 class AirQualityRecord(Base):
     __tablename__ = "air_quality_records"
-    __table_args__ = (UniqueConstraint("date", "city"),)
 
     id: Mapped[int] = mapped_column(primary_key=True)
-    date: Mapped[datetime.date]
-    city: Mapped[str]
+    date: Mapped[datetime.date] = mapped_column()
+    city: Mapped[str] = mapped_column()
     pm25: Mapped[float]
     no2: Mapped[float]
     co2: Mapped[float]
     aqi: Mapped[float]
     aqi_level: Mapped[str]
 
-    alert: Mapped["Alert | None"] = relationship(back_populates="air_quality_record")
+    __table_args__ = (UniqueConstraint(date, city),)
+
+    alert: Mapped[Alert | None] = relationship()
