@@ -31,17 +31,10 @@ class AirQualityUploadService:
         logger.info(f"Processing upload {file_name}")
 
         parsed_upload = self._parser.parse(file)
-        new_rows, duplicate_rows = self._reject_duplicates(parsed_upload.valid_rows)
+        new_rows, duplicate_rows = self._split_out_duplicates(parsed_upload.valid_rows)
         records = [self._to_record(valid_row.reading) for valid_row in new_rows]
         self._air_quality_repository.save_all(records)
-
-        upload_report = UploadReport(
-            saved_rows=len(records),
-            created_alerts=sum(record.alert is not None for record in records),
-            rejected_rows=sorted(
-                parsed_upload.rejected_rows + duplicate_rows, key=lambda rejected_row: rejected_row.line_number
-            ),
-        )
+        upload_report = self._to_upload_report(records, parsed_upload.rejected_rows + duplicate_rows)
         logger.info(
             f"Finished upload {file_name}: saved {upload_report.saved_rows} rows, "
             f"created {upload_report.created_alerts} alerts, rejected {len(upload_report.rejected_rows)}"
@@ -49,27 +42,31 @@ class AirQualityUploadService:
 
         return upload_report
 
-    def _reject_duplicates(self, valid_rows: list[ValidRow]) -> tuple[list[ValidRow], list[RejectedRow]]:
+    def _split_out_duplicates(self, valid_rows: list[ValidRow]) -> tuple[list[ValidRow], list[RejectedRow]]:
         upload_dates = {valid_row.reading.date for valid_row in valid_rows}
         taken_city_days = self._air_quality_repository.get_city_days(upload_dates)
         new_rows = []
         duplicate_rows = []
 
         for valid_row in valid_rows:
-            reading = valid_row.reading
-            city_day = (reading.date, reading.city)
+            city_day = (valid_row.reading.date, valid_row.reading.city)
 
             if city_day in taken_city_days:
-                duplicate_row = RejectedRow(
-                    line_number=valid_row.line_number, reason=f"{reading.city} already has data for {reading.date}"
-                )
-                logger.warning(f"Rejected line {duplicate_row.line_number}: {duplicate_row.reason}")
-                duplicate_rows.append(duplicate_row)
+                duplicate_rows.append(self._to_duplicate_row(valid_row))
             else:
                 taken_city_days.add(city_day)
                 new_rows.append(valid_row)
 
         return new_rows, duplicate_rows
+
+    def _to_duplicate_row(self, valid_row: ValidRow) -> RejectedRow:
+        reading = valid_row.reading
+        duplicate_row = RejectedRow(
+            line_number=valid_row.line_number, reason=f"{reading.city} already has data for {reading.date}"
+        )
+        logger.warning(f"Rejected line {duplicate_row.line_number}: {duplicate_row.reason}")
+
+        return duplicate_row
 
     def _to_record(self, reading: AirQualityReading) -> AirQualityRecord:
         aqi_result = self._calculator.calculate(reading.pm25, reading.no2, reading.co2)
@@ -88,3 +85,10 @@ class AirQualityUploadService:
             record.alert = Alert(date=record.date, city=record.city, aqi=record.aqi)
 
         return record
+
+    def _to_upload_report(self, records: list[AirQualityRecord], rejected_rows: list[RejectedRow]) -> UploadReport:
+        return UploadReport(
+            saved_rows=len(records),
+            created_alerts=sum(record.alert is not None for record in records),
+            rejected_rows=sorted(rejected_rows, key=lambda rejected_row: rejected_row.line_number),
+        )
