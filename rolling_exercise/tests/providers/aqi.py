@@ -1,3 +1,6 @@
+from src.models.aqi_result import AqiResult
+
+
 class AqiLevel:
     GOOD = "Good"
     MODERATE = "Moderate"
@@ -29,5 +32,10 @@ class Co2:
 
 
 class Aqi:
+    GOOD = 30
     TOP_OF_GOOD = 50
     MAX = 500
+
+
+class AqiResults:
+    GOOD = AqiResult(aqi=Aqi.GOOD, aqi_level=AqiLevel.GOOD)

@@ -5,8 +5,10 @@ description = "API for uploading city air quality measurements and querying thei
 requires-python = ">=3.11"
 dependencies = [
     "fastapi>=0.162",
+    "psycopg[binary]>=3.3",
     "pydantic>=2.14",
     "pydantic-settings>=2.16",
+    "sqlalchemy>=2.1",
     "uvicorn[standard]>=0.54",
 ]
 
