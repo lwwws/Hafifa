@@ -6,6 +6,7 @@ from src.db.alert import Alert
 from src.models.air_quality_reading import AirQualityReading
 from src.models.rejected_row import RejectedRow
 from src.models.upload_report import UploadReport
+from src.models.valid_row import ValidRow
 from src.parsing.air_quality_csv_parser import AirQualityCsvParser
 from src.repositories.air_quality_repository import AirQualityRepository
 from src.services.aqi_calculator import AqiCalculator
@@ -30,8 +31,8 @@ class AirQualityUploadService:
         logger.info(f"Processing upload {file_name}")
 
         parsed_upload = self._parser.parse(file)
-        new_readings, duplicate_rows = self._reject_duplicates(parsed_upload.readings)
-        records = [self._to_record(reading) for reading in new_readings]
+        new_rows, duplicate_rows = self._reject_duplicates(parsed_upload.valid_rows)
+        records = [self._to_record(valid_row.reading) for valid_row in new_rows]
         self._air_quality_repository.save_all(records)
 
         upload_report = UploadReport(
@@ -48,28 +49,27 @@ class AirQualityUploadService:
 
         return upload_report
 
-    def _reject_duplicates(
-        self, readings: list[AirQualityReading]
-    ) -> tuple[list[AirQualityReading], list[RejectedRow]]:
-        upload_dates = {reading.date for reading in readings}
+    def _reject_duplicates(self, valid_rows: list[ValidRow]) -> tuple[list[ValidRow], list[RejectedRow]]:
+        upload_dates = {valid_row.reading.date for valid_row in valid_rows}
         taken_city_days = self._air_quality_repository.get_city_days(upload_dates)
-        new_readings = []
+        new_rows = []
         duplicate_rows = []
 
-        for reading in readings:
+        for valid_row in valid_rows:
+            reading = valid_row.reading
             city_day = (reading.date, reading.city)
 
             if city_day in taken_city_days:
                 duplicate_row = RejectedRow(
-                    line_number=reading.line_number, reason=f"{reading.city} already has data for {reading.date}"
+                    line_number=valid_row.line_number, reason=f"{reading.city} already has data for {reading.date}"
                 )
                 logger.warning(f"Rejected line {duplicate_row.line_number}: {duplicate_row.reason}")
                 duplicate_rows.append(duplicate_row)
             else:
                 taken_city_days.add(city_day)
-                new_readings.append(reading)
+                new_rows.append(valid_row)
 
-        return new_readings, duplicate_rows
+        return new_rows, duplicate_rows
 
     def _to_record(self, reading: AirQualityReading) -> AirQualityRecord:
         aqi_result = self._calculator.calculate(reading.pm25, reading.no2, reading.co2)
