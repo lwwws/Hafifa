@@ -19,8 +19,7 @@ from tests.csv_rows import to_csv_file
 from tests.providers.aqi import AqiLevel, AqiResults, Pm25
 from tests.providers.city_days import City, Day
 from tests.providers.csv_content import CsvFileContent, CsvRow
-
-ALERT_AQI_THRESHOLD = 300
+from tests.providers.settings import Setting
 
 
 @pytest.fixture
@@ -34,7 +33,7 @@ def calculator() -> Mock:
 @pytest.fixture
 def service(calculator, session) -> AirQualityUploadService:
     return AirQualityUploadService(
-        AirQualityCsvParser(), calculator, AirQualityRepository(session), ALERT_AQI_THRESHOLD
+        AirQualityCsvParser(), calculator, AirQualityRepository(session), Setting.ALERT_AQI_THRESHOLD
     )
 
 
@@ -64,18 +63,18 @@ def test_valid_row_is_saved_with_its_aqi(service, session):
 
 
 def test_aqi_over_threshold_creates_alert(service, calculator, session):
-    calculator.calculate.return_value = AqiResult(aqi=ALERT_AQI_THRESHOLD + 1, aqi_level=AqiLevel.HAZARDOUS)
+    calculator.calculate.return_value = AqiResult(aqi=Setting.ALERT_AQI_THRESHOLD + 1, aqi_level=AqiLevel.HAZARDOUS)
 
     report = upload_rows(service, CsvRow.VALID)
 
     (alert,) = saved_alerts(session)
     assert alert.city == City.HAIFA
-    assert alert.aqi == ALERT_AQI_THRESHOLD + 1
+    assert alert.aqi == Setting.ALERT_AQI_THRESHOLD + 1
     assert report.created_alerts == 1
 
 
 def test_aqi_at_threshold_creates_no_alert(service, calculator, session):
-    calculator.calculate.return_value = AqiResult(aqi=ALERT_AQI_THRESHOLD, aqi_level=AqiLevel.VERY_UNHEALTHY)
+    calculator.calculate.return_value = AqiResult(aqi=Setting.ALERT_AQI_THRESHOLD, aqi_level=AqiLevel.VERY_UNHEALTHY)
 
     report = upload_rows(service, CsvRow.VALID)
 

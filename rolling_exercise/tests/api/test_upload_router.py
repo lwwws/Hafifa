@@ -5,7 +5,7 @@ from fastapi import status
 from httpx import Response
 
 from tests.api.uploads import UPLOAD_URL, upload_content, upload_rows
-from tests.csv_rows import csv_row
+from tests.providers.csv_content import CsvFileContent, CsvRow
 
 
 @pytest.fixture
@@ -18,7 +18,7 @@ def rejected_lines(response: Response) -> list[int]:
 
 
 def test_upload_saves_valid_rows_and_reports_invalid_ones(client):
-    response = upload_rows(client, csv_row(city="Haifa"), csv_row(city="Akko", no2=""))
+    response = upload_rows(client, CsvRow.VALID, CsvRow.EMPTY_NO2)
 
     assert response.status_code == status.HTTP_201_CREATED
     assert response.json()["saved_rows"] == 1
@@ -26,9 +26,9 @@ def test_upload_saves_valid_rows_and_reports_invalid_ones(client):
 
 
 def test_rows_from_an_earlier_upload_are_rejected_as_duplicates(client):
-    upload_rows(client, csv_row(date="2024-11-19", city="Haifa"))
+    upload_rows(client, CsvRow.VALID)
 
-    response = upload_rows(client, csv_row(date="2024-11-19", city="Haifa"))
+    response = upload_rows(client, CsvRow.VALID)
 
     assert response.status_code == status.HTTP_201_CREATED
     assert response.json()["saved_rows"] == 0
@@ -45,7 +45,7 @@ def test_real_sample_file_is_accepted(client, sample_files_dir):
 
 
 def test_unusable_file_returns_bad_request_with_reason(client):
-    response = upload_content(client, "empty.csv", b"")
+    response = upload_content(client, "empty.csv", CsvFileContent.EMPTY)
 
     assert response.status_code == status.HTTP_400_BAD_REQUEST
     assert response.json() == {"detail": "File is empty"}
