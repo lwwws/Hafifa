@@ -12,10 +12,17 @@ def create_app(settings: ApiSettings) -> FastAPI:
     app = FastAPI(title="Air Quality API")
     app.state.settings = settings
     app.state.session_factory = create_session_factory(settings.database_url)
-
-    app.include_router(health_router.router)
-    app.include_router(upload_router.router)
-    app.add_exception_handler(InvalidCsvFileError, handle_invalid_csv_file)
+    _include_routers(app)
+    _add_exception_handlers(app)
     app.add_middleware(RequestBodyLimitMiddleware, max_body_size=settings.max_request_body_size_bytes)
 
     return app
+
+
+def _include_routers(app: FastAPI):
+    app.include_router(health_router.router)
+    app.include_router(upload_router.router)
+
+
+def _add_exception_handlers(app: FastAPI):
+    app.add_exception_handler(InvalidCsvFileError, handle_invalid_csv_file)
