@@ -1,0 +1,5 @@
+class Setting:
+    ALERT_AQI_THRESHOLD = 300
+    MAX_REQUEST_BODY_SIZE_BYTES = 10_000
+    API_HOST = "127.0.0.1"
+    API_PORT = 8000
